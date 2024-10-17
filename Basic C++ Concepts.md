@@ -5,7 +5,6 @@
     - [Comments](#comments)
     - [Variables and DataTypes](#variables-and-datatypes)
     - [Constants](#constants)
-      - [Example](#example)
     - [Scope](#scope)
     - [Namespaces](#namespaces)
     - [Typedef and Aliases](#typedef-and-aliases)
@@ -23,6 +22,11 @@
       - [Functions with Parameters](#functions-with-parameters)
       - [Function Overloading](#function-overloading)
       - [Recursive Function](#recursive-function)
+  - [Address of Operator(\&)](#address-of-operator)
+  - [Value Semantics](#value-semantics)
+    - [References](#references)
+    - [Dereferencing](#dereferencing)
+  - [Dynamic Memory Allocation or HEP](#dynamic-memory-allocation-or-hep)
 
 
 ### Hello World Program
@@ -159,13 +163,13 @@ int main(){
 
 - The `const` keyword is used to define constants. Constants are variables whose values cannot be changed once they are assigned. This ensures that the value remains read-only throughout the program. It's a common convention to name constants in all uppercase letters.
 
-#### Example
-
 ```cpp
 #include <iostream>
+#include <type_traits>  // For std::is_const
+#include <typeinfo>     // For typeid
 
 int main() {
-    /* 
+    /*
     The `const` keyword specifies that a variable's value is constant.
     This tells the compiler to prevent anything from modifying it (read-only).
     It's a common convention to name constants using all uppercase letters.
@@ -177,7 +181,13 @@ int main() {
     double radius = 10.0;
     double circumference = 2 * PI * radius;
 
-    std::cout << "The circumference is " << circumference << " cm." << std::endl;  // Ouput: 62.8318cm
+    // Check if PI is a constant
+    std::cout << "Is PI constant? " << std::is_const<decltype(PI)>::value << std::endl;  // Output: 1 (true)
+
+    // Display the type of PI using typeid and decltype
+    std::cout << "Type of PI: " << typeid(decltype(PI)).name() << std::endl;  // Output: d (double)
+
+    std::cout << "The circumference is " << circumference << " cm." << std::endl;  // Output: 62.8318 cm
 
     return 0;
 }
@@ -715,3 +725,164 @@ int main() {
   - Always include a base case to stop the recursion.
   - Optimize your code to avoid redundant calculations (e.g., use memoization for the Fibonacci sequence).
   - Use recursion for problems that are naturally recursive, like tree traversal, combinatorial problems, and divide-and-conquer algorithms.
+
+## Address of Operator(&)
+
+- The address-of operator (&) in C++ is used to obtain the memory address of a variable. This operator is helpful when dealing with pointers, as it allows you to directly access the address where the variable is stored in memory.
+
+
+```cpp
+#include <iostream>
+
+// Function definition
+void foo() {
+    int x = 72; // Local variable inside the function
+}
+
+int main() {
+    int x = 42;               // Integer variable
+    float y = 72.0;           // Float variable
+    char a = 'a';             // Character variable
+    signed char b = 'b';      // Signed character variable
+    unsigned char c = 'c';    // Unsigned character variable
+
+    // Printing the addresses of the variables
+    std::cout << "Address of x: " << &(x) << std::endl;            // Example output: Address of x: 0x7ffd8d4e1234
+    std::cout << "Size of x: " << sizeof(x) << " bytes" << std::endl; // Example output: Size of x: 4 bytes
+    std::cout << "Address of y: " << &(y) << std::endl;            // Example output: Address of y: 0x7ffd8d4e1238
+    std::cout << "Address of a: " << (void*)&(a) << std::endl;     // Example output: Address of a: 0x7ffd8d4e123c
+    std::cout << "Address of b: " << (void*)&(b) << std::endl;     // Example output: Address of b: 0x7ffd8d4e123d
+    std::cout << "Address of c: " << (void*)&(c) << std::endl;     // Example output: Address of c: 0x7ffd8d4e123e
+
+    // Printing the addresses of the functions
+    std::cout << "Address of foo function: " << (void*)&foo << std::endl;   // Example output: Address of foo function: 0x55e2b7f10270
+    std::cout << "Address of main function: " << (void*)&main << std::endl; // Example output: Address of main function: 0x55e2b7f10290
+
+    return 0;
+}
+```
+
+- &x, &y, &a, &b, and &c are used to get the memory addresses of the variables x, y, a, b, and c.
+- The expression (void*)&a is used to explicitly cast the address of a to a void*, which ensures that it is displayed as a memory address.
+&foo and &main are used to get the addresses of the functions foo and main.
+
+## Value Semantics
+
+- Pass by Value is a method of passing arguments to a function where the function receives a copy of the argument's value, not the actual variable itself. Changes made to the parameter inside the function do not affect the original variable outside the function.
+
+- When you pass an argument to a function by value:
+  - A copy of the argument is created.
+  - The function operates on this copy, not the original data.
+  - Any changes to the parameter inside the function will not be reflected in the original variable outside the function.
+
+
+```cpp
+#include <iostream>
+
+// Function that modifies the value of its parameter
+void PassByValue(int number) {
+    number = 100;  // This change affects only the local copy of the variable
+    std::cout << "Inside function, number = " << number << std::endl;  // Output: 100
+}
+
+int main() {
+    int num = 42;
+    std::cout << "Before function call, num = " << &num << std::endl;
+    std::cout << "Before function call, num = " << num << std::endl;   // Output: 42
+
+    // Call the function with pass by value
+    PassByValue(num);
+
+    std::cout << "After function call, num = " << &num << std::endl;
+    std::cout << "After function call, num = " << num << std::endl;    // Output: 42
+    return 0;
+}
+```
+
+
+### References
+
+- References in C++ are used to create an alias for another variable. They provide a way to access the same memory location as the original variable using a different name. References are often used in function parameters to allow modification of the original data or to avoid copying large data structures.
+
+```cpp
+#include <iostream>
+#include <typeinfo>  // Required for typeid()
+
+int main() {
+    int x = 42;           // Original variable
+    int& ref = x;         // Reference to x
+    // "int&" is the full type for a reference type
+
+    ref = 43;  // Changing the value through the reference
+
+    // Printing the value, type, and address of x
+    std::cout << "x value     : " << x << std::endl;          // Output: 43
+    std::cout << "x type      : " << typeid(x).name() << std::endl;  // Output: int
+    std::cout << "x address   : " << &x << std::endl;         // Address of x
+
+    // Printing the value, type, and address of ref
+    std::cout << "ref value   : " << ref << std::endl;        // Output: 43
+    std::cout << "ref type    : " << typeid(ref).name() << std::endl;  // Output: int
+    std::cout << "ref address : " << &ref << std::endl;       // Same address as x
+
+    return 0;
+}
+```
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <algorithm>
+void PassByValue(std::vector<int> arg) {
+    arg[0] = 1;  // Modifies the copy of the vector
+}
+
+void PassByReference(std::vector<int>& alias) {
+    alias[0] = 1;  // Modifies the original vector
+}
+
+int main() {
+    std::vector<int> x(1000000000);  // Create a vector with 1 billion elements
+    std::fill(std::begin(x), std::end(x), 1);  // Fill the vector with 1s
+
+    // Call our function
+    PassByValue(x);  // Pass the vector by value (creates a copy) Slower
+    // PassByReference(x);  // Pass the vector by reference (no copy) Faster
+
+    return 0;
+}
+```
+
+### Dereferencing
+
+- Dereferencing a pointer means accessing the value stored at the memory location that the pointer points to. In other words, it allows you to read or modify the value of the variable the pointer refers to.
+- The * operator is used to dereference a pointer.
+
+```cpp
+#include <iostream>
+
+int main() {
+    int num = 10;
+    int* ptr = &num;  // Pointer to num
+
+    std::cout << "Value of num: " << num << std::endl;              // Output: 10
+    std::cout << "Address of num (&num): " << &num << std::endl;    // Prints the address of num
+    std::cout << "Pointer value (ptr): " << ptr << std::endl;       // Prints the same address as &num
+    std::cout << "Dereferenced pointer (*ptr): " << *ptr << std::endl;  // Output: 10
+
+    // Modify the value of num using the pointer
+    *ptr = 20;
+    std::cout << "New value of num after dereferencing: " << num << std::endl;  // Output: 20
+
+    return 0;
+}
+```
+
+## Dynamic Memory Allocation or HEP
+
+
+- Dynamic memory allocation is a way to allocate memory at runtime, which means the amount of memory required does not need to be known at compile time. In C++, dynamic memory is managed using the operators new and delete.
+- *new* Operator
+  - The new operator is used to allocate memory dynamically on the heap (free store).
+  - It returns a pointer to the allocated memory.
+  - For basic types, it initializes the allocated memory to a specific value.
